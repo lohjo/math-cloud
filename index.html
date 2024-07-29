@@ -1,1 +1,214 @@
+import React, { useState, useEffect } from 'react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { CheckSquare, Clock, Award, Users, BookOpen } from 'lucide-react';
+import { Progress } from "@/components/ui/progress"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
+const mockData = {
+  studentName: "Nuufayll",
+  level: 3,
+  points: 375,
+  nextLevelPoints: 500,
+  daysLeft: 22,
+  remainingLessons: 3,
+  dailyQuests: [
+    { id: 1, description: "Complete 5 problems in Algebra", completed: false },
+    { id: 2, description: "Achieve a score of 80% or higher on today's mini-test", completed: true },
+    { id: 3, description: "Spend at least 30 minutes reviewing Statistics", completed: false },
+  ],
+  recentAchievements: [
+    { id: 1, name: "Concept Conqueror: Analytical", icon: <CheckSquare size={24} /> },
+    { id: 2, name: "Consistent Crusher", icon: <Clock size={24} /> },
+  ],
+  progressChart: [
+    { name: 'Mon', points: 250 },
+    { name: 'Tue', points: 280 },
+    { name: 'Wed', points: 300 },
+    { name: 'Thu', points: 340 },
+    { name: 'Fri', points: 375 },
+  ],
+  conceptProgress: [
+    { name: "Analytical", progress: 100, mastery: 75 },
+    { name: "Statistical", progress: 100, mastery: 60 },
+    { name: "Numerical", progress: 100, mastery: 0 },
+    { name: "Algebraic", progress: 0, mastery: 0 },
+    { name: "Probabilistic", progress: 0, mastery: 0 },
+  ],
+  problemSolving: [
+    { name: "Non-routine", completed: false },
+    { name: "Open-ended", completed: false },
+    { name: "Non-routine and open-ended", completed: false },
+    { name: "Discuss answer (Level 1)", completed: false },
+    { name: "Discuss answer (Level 2)", completed: false },
+    { name: "Discuss answer (Level 3)", completed: false },
+  ],
+  thinking: [
+    { name: "Analyse and construct logical arguments", completed: false },
+    { name: "Apply concepts to solve problems", completed: false },
+    { name: "Observe patterns", completed: false },
+  ],
+  applications: [
+    { name: "Identify appropriate representations", completed: false },
+    { name: "Produce appropriate representations", completed: false },
+    { name: "Use model diagrams", completed: false },
+    { name: "Tabulate numbers", completed: false },
+    { name: "Guess and check", completed: false },
+    { name: "Work backwards", completed: false },
+    { name: "Simplify problems", completed: false },
+  ],
+};
+
+const DailyQuests = ({ quests }) => (
+  <Card>
+    <CardHeader>
+      <CardTitle>Daily Quests</CardTitle>
+    </CardHeader>
+    <CardContent>
+      {quests.map(quest => (
+        <div key={quest.id} className="flex items-center mb-2">
+          <input type="checkbox" checked={quest.completed} className="mr-2" readOnly />
+          <span>{quest.description}</span>
+        </div>
+      ))}
+    </CardContent>
+  </Card>
+);
+
+const Achievements = ({ achievements }) => (
+  <Card>
+    <CardHeader>
+      <CardTitle>Recent Achievements</CardTitle>
+    </CardHeader>
+    <CardContent>
+      {achievements.map(achievement => (
+        <div key={achievement.id} className="flex items-center mb-2">
+          {achievement.icon}
+          <span className="ml-2">{achievement.name}</span>
+        </div>
+      ))}
+    </CardContent>
+  </Card>
+);
+
+const ConceptProgress = ({ concepts }) => (
+  <Card>
+    <CardHeader>
+      <CardTitle>Concept Progress</CardTitle>
+    </CardHeader>
+    <CardContent>
+      {concepts.map((concept, index) => (
+        <div key={index} className="mb-4">
+          <div className="flex justify-between mb-1">
+            <span>{concept.name}</span>
+            <span>Foundation: {concept.progress}% | Mastery: {concept.mastery}%</span>
+          </div>
+          <div className="flex w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+            <div
+              className="flex flex-col justify-center overflow-hidden bg-blue-500"
+              role="progressbar"
+              style={{width: `${concept.progress}%`}}
+              aria-valuenow={concept.progress}
+              aria-valuemin="0"
+              aria-valuemax="100"
+            ></div>
+          </div>
+          <div className="flex w-full h-2 bg-gray-200 rounded-full overflow-hidden mt-1">
+            <div
+              className="flex flex-col justify-center overflow-hidden bg-green-500"
+              role="progressbar"
+              style={{width: `${concept.mastery}%`}}
+              aria-valuenow={concept.mastery}
+              aria-valuemin="0"
+              aria-valuemax="100"
+            ></div>
+          </div>
+        </div>
+      ))}
+    </CardContent>
+  </Card>
+);
+
+const SkillProgress = ({ skills, title }) => (
+  <Card>
+    <CardHeader>
+      <CardTitle>{title}</CardTitle>
+    </CardHeader>
+    <CardContent>
+      {skills.map((skill, index) => (
+        <div key={index} className="flex items-center mb-2">
+          <input type="checkbox" checked={skill.completed} className="mr-2" readOnly />
+          <span>{skill.name}</span>
+        </div>
+      ))}
+    </CardContent>
+  </Card>
+);
+
+const Dashboard = () => {
+  const [activeTab, setActiveTab] = useState("overview");
+
+  return (
+    <div className="p-4 max-w-6xl mx-auto">
+      <header className="mb-6">
+        <h1 className="text-3xl font-bold">Welcome back, {mockData.studentName}!</h1>
+        <p className="text-gray-600">Level {mockData.level} Scholar</p>
+        <p className="text-gray-600">{mockData.daysLeft} days left until PSLE preliminary exam</p>
+        <p className="text-gray-600">{mockData.remainingLessons} lessons remaining</p>
+      </header>
+
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="progress">Progress</TabsTrigger>
+          <TabsTrigger value="skills">Skills</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="overview" className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Level Progress</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Progress value={(mockData.points / mockData.nextLevelPoints) * 100} className="w-full" />
+                <p className="mt-2 text-center">{mockData.points} / {mockData.nextLevelPoints} points to next level</p>
+              </CardContent>
+            </Card>
+            <DailyQuests quests={mockData.dailyQuests} />
+          </div>
+          <ConceptProgress concepts={mockData.conceptProgress} />
+          <Achievements achievements={mockData.recentAchievements} />
+        </TabsContent>
+
+        <TabsContent value="progress">
+          <Card>
+            <CardHeader>
+              <CardTitle>Weekly Progress</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={mockData.progressChart}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Line type="monotone" dataKey="points" stroke="#8884d8" />
+                </LineChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="skills" className="space-y-4">
+          <SkillProgress skills={mockData.problemSolving} title="Problem-Solving Skills" />
+          <SkillProgress skills={mockData.thinking} title="Thinking Skills" />
+          <SkillProgress skills={mockData.applications} title="Application Skills" />
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+};
+
+export default Dashboard;
